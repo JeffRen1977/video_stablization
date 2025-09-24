@@ -1,0 +1,22 @@
+{
+  "stabilized_video": "experiments/stabilization/results/faststab_out.mp4",
+  "ground_truth_video": null,
+  "original_video": "samples/stabilization/shaky.mp4",
+  "timestamp": "2025-09-24 07:53:33",
+  "temporal_smoothness": {
+    "mean_translation": 10.183691024780273,
+    "std_translation": 4.620723724365234,
+    "mean_rotation": 5.5091352462768555,
+    "std_rotation": 3.0507395267486572,
+    "max_translation": 19.93029022216797,
+    "min_translation": 2.1791350841522217
+  },
+  "boundary_crop_ratio": 0.0,
+  "quality_metrics": null,
+  "performance": {
+    "frame_count": 149,
+    "fps": 30.0,
+    "duration_seconds": 4.966666666666667,
+    "evaluation_time_seconds": 0.00040078163146972656
+  }
+}

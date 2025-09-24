@@ -1,0 +1,38 @@
+# Video Stabilization Case Study - Requirements
+# Core dependencies for NNDVS and evaluation
+
+# Deep Learning Framework
+torch>=1.9.0
+torchvision>=0.10.0
+
+# Computer Vision
+opencv-python>=4.5.0
+opencv-contrib-python>=4.5.0
+
+# Image Processing
+Pillow>=8.0.0
+scikit-image>=0.18.0
+
+# Scientific Computing
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Video Processing
+imageio>=2.9.0
+imageio-ffmpeg>=0.4.0
+
+# Utilities
+tqdm>=4.62.0
+argparse
+pathlib
+
+# Optional: For advanced evaluation
+scikit-learn>=1.0.0
+
+# Development tools (optional)
+jupyter>=1.0.0
+notebook>=6.4.0

@@ -1,0 +1,83 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyTorch
+*.pth
+*.pth.tar
+*.pt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Video files (large)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Logs
+*.log
+logs/
+
+# Results and outputs (optional - uncomment if you don't want to track results)
+# experiments/stabilization/results/
+# samples/stabilization/*.mp4
+
+# Third-party repositories (cloned separately)
+thirdparty/Fast-Stab/
+thirdparty/GlobalFlowNet/
+thirdparty/NNDVS/
+
+# Model checkpoints (uncomment if you don't want to track large model files)
+# thirdparty/*/pretrained/
+# thirdparty/*/trainedModels/
+# thirdparty/*/checkpoints/
