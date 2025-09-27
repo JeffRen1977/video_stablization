@@ -7,7 +7,7 @@ comprehensive comparison analysis including quality metrics, performance,
 and visual comparisons.
 
 Usage:
-    python compare_methods.py --input <video> --methods nndvs globalflownet faststab --output <dir>
+    python compare_methods.py --input <video> --methods nndvs globalflownet --output <dir>
 """
 
 import argparse
@@ -36,22 +36,16 @@ class VideoStabilizationComparator:
         self.methods = {
             'nndvs': {
                 'repo': 'thirdparty/NNDVS',
-                'checkpoint': 'data/checkpoints/nndvs_pretrained.pth',
+                'checkpoint': 'thirdparty/NNDVS/pretrained/pretrained_model.pth.tar',
                 'script': 'experiments/stabilization/run_nndvs.sh',
                 'description': 'NNDVS - Online Low-Latency'
             },
             'globalflownet': {
                 'repo': 'thirdparty/GlobalFlowNet',
-                'checkpoint': 'data/checkpoints/globalflownet_pretrained.pth',
+                'checkpoint': 'thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth',
                 'script': 'experiments/stabilization/run_globalflownet.sh',
                 'description': 'GlobalFlowNet - Global Motion'
             },
-            'faststab': {
-                'repo': 'thirdparty/Fast-Stab',
-                'checkpoint': 'data/checkpoints/faststab_pretrained.pth',
-                'script': 'experiments/stabilization/run_faststab.sh',
-                'description': 'Fast-Stab - Full-frame Outpainting'
-            }
         }
     
     def run_method(self, method_name: str) -> Dict[str, Any]:
@@ -308,7 +302,7 @@ def main():
     parser = argparse.ArgumentParser(description="Compare video stabilization methods")
     parser.add_argument("--input", required=True, help="Input shaky video")
     parser.add_argument("--methods", nargs='+', 
-                       choices=['nndvs', 'globalflownet', 'faststab'],
+                       choices=['nndvs', 'globalflownet'],
                        default=['nndvs'],
                        help="Methods to compare")
     parser.add_argument("--output", required=True, help="Output directory for results")
@@ -348,3 +342,4 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
+

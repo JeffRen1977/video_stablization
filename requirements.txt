@@ -36,3 +36,4 @@ scikit-learn>=1.0.0
 # Development tools (optional)
 jupyter>=1.0.0
 notebook>=6.4.0
+

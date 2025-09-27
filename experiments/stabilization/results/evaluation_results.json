@@ -1,5 +1,5 @@
 {
-  "stabilized_video": "experiments/stabilization/results/faststab_out.mp4",
+  "stabilized_video": "experiments/stabilization/results/nndvs_out.mp4",
   "ground_truth_video": null,
   "original_video": "samples/stabilization/shaky.mp4",
   "timestamp": "2025-09-24 07:53:33",

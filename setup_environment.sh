@@ -45,14 +45,6 @@ else
     echo "GlobalFlowNet repository already exists"
 fi
 
-# Clone Fast-Stab repository
-echo "Cloning Fast-Stab repository..."
-if [ ! -d "thirdparty/Fast-Stab" ]; then
-    git clone https://github.com/liuzhen03/Fast-Stab.git thirdparty/Fast-Stab
-    echo "Fast-Stab repository cloned successfully"
-else
-    echo "Fast-Stab repository already exists"
-fi
 
 # Create sample data preparation script
 echo "Creating sample data preparation script..."
@@ -149,3 +141,4 @@ echo "4. Run stabilization: bash experiments/stabilization/run_nndvs.sh --repo t
 echo "5. Evaluate results: python experiments/stabilization/eval_video.py --input experiments/stabilization/results/nndvs_out.mp4 --original samples/stabilization/shaky.mp4"
 echo ""
 echo "For detailed instructions, see README.md"
+

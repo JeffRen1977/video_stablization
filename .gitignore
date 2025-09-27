@@ -73,9 +73,6 @@ logs/
 # samples/stabilization/*.mp4
 
 # Third-party repositories (cloned separately)
-thirdparty/Fast-Stab/
-thirdparty/GlobalFlowNet/
-thirdparty/NNDVS/
 
 # Model checkpoints (uncomment if you don't want to track large model files)
 # thirdparty/*/pretrained/
