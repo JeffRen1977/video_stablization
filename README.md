@@ -1,4 +1,4 @@
-# Chapter X — Video Stabilization (Practical Case Study)
+# Chapter 13 — Video Stabilization
 
 ## Overview
 
