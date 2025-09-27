@@ -351,148 +351,6 @@ class ComposedStabilizer():
 | **GPU Memory** | Moderate | High |
 | **Motion Estimation** | Local path smoothing | Global motion + local flow |
 
-## Experimental Results Discussion
-
-### Temporal Smoothness Analysis
-Our evaluation shows that both methods achieve reasonable temporal smoothness:
-
-- **NNDVS**: Mean translation of 10.18 pixels with std of 4.62
-- **GlobalFlowNet**: Expected to achieve better smoothness due to global motion estimation
-
-### Performance Metrics
-- **Processing Speed**: NNDVS achieves real-time 30 FPS processing
-- **Memory Usage**: NNDVS (16.8 MB) vs GlobalFlowNet (37.5 MB)
-- **Boundary Preservation**: NNDVS preserves full field of view
-
-### Quality Trade-offs
-The evaluation reveals fundamental trade-offs between the two approaches:
-
-1. **Latency vs Quality**: NNDVS prioritizes real-time processing over maximum quality
-2. **Field of View vs Artifacts**: GlobalFlowNet may crop frames to avoid stabilization artifacts
-3. **Memory vs Performance**: Larger models (GlobalFlowNet) provide better quality at higher cost
-
-## Shortcomings and Future Improvements
-
-### Current Limitations
-
-#### NNDVS Limitations
-1. **Motion Estimation Dependency**: Quality limited by input motion accuracy from FAST+KLT
-2. **Window Size Sensitivity**: Performance varies with sliding window size (net_radius=15)
-3. **Simple Architecture**: Basic U-Net may not capture complex motion patterns
-4. **No Global Context**: Lacks global motion understanding beyond local path smoothing
-5. **Feature Tracking Failures**: KLT tracking can fail in low-texture regions
-6. **Homography Assumption**: Assumes planar scene motion, limiting effectiveness in 3D scenes
-
-#### GlobalFlowNet Limitations
-1. **High Latency**: Cannot process frames in real-time due to batch processing requirement
-2. **Memory Intensive**: Requires significant GPU memory (37.5 MB model + intermediate features)
-3. **Field of View Loss**: Cropping reduces usable frame area (crop=0.8 by default)
-4. **Batch Processing**: Cannot handle streaming video, requires full video for processing
-5. **DCT Filtering Overhead**: DCT computation adds computational complexity
-6. **Multi-scale Dependency**: Performance depends on pyramid level configuration
-
-### Proposed Improvements
-
-#### For NNDVS
-1. **Enhanced Motion Estimation**: 
-   - Replace FAST+KLT with deep learning-based optical flow (RAFT, PWCNet)
-   - Implement robust feature matching with learned descriptors
-   - Add motion validation using temporal consistency
-
-2. **Attention Mechanisms**: 
-   - Add spatial attention to focus on important motion regions
-   - Implement temporal attention for long-range dependencies
-   - Use self-attention in U-Net skip connections
-
-3. **Multi-scale Processing**: 
-   - Implement pyramid-based processing similar to GlobalFlowNet
-   - Add multi-resolution path smoothing
-   - Use scale-aware loss functions
-
-4. **Global Motion Integration**: 
-   - Combine local path smoothing with global motion estimation
-   - Add DCT-based global motion filtering
-   - Implement adaptive global-local motion fusion
-
-#### For GlobalFlowNet
-1. **Real-time Adaptation**: 
-   - Develop online processing variants with sliding window approach
-   - Implement incremental DCT computation
-   - Add frame-by-frame processing capability
-
-2. **Memory Optimization**: 
-   - Implement model compression and quantization
-   - Use gradient checkpointing for memory efficiency
-   - Develop lightweight DCT filtering variants
-
-3. **Field of View Preservation**: 
-   - Develop inpainting methods to avoid cropping
-   - Implement content-aware resizing
-   - Add seam carving for boundary preservation
-
-4. **Streaming Support**: 
-   - Enable frame-by-frame processing
-   - Implement buffered processing with minimal latency
-   - Add adaptive quality adjustment based on processing time
-
-#### General Improvements
-1. **Hybrid Approaches**: 
-   - Combine online and offline processing
-   - Use NNDVS for real-time preview, GlobalFlowNet for final output
-   - Implement quality-adaptive processing
-
-2. **Perceptual Metrics**: 
-   - Integrate human perception-based evaluation
-   - Add perceptual loss functions
-   - Implement user study validation
-
-3. **Mobile Optimization**: 
-   - Develop mobile-specific architectures
-   - Implement model pruning and quantization
-   - Add hardware-specific optimizations (NPU, GPU)
-
-4. **Joint Processing**: 
-   - Integrate with denoising, exposure compensation
-   - Add super-resolution capabilities
-   - Implement end-to-end video enhancement pipeline
-
-### Future Research Directions
-
-1. **Neural Architecture Search**: 
-   - Automatically discover optimal architectures for video stabilization
-   - Search for efficient online processing networks
-   - Optimize for specific hardware constraints
-
-2. **Self-supervised Learning**: 
-   - Reduce dependency on labeled training data
-   - Use synthetic motion generation for training
-   - Implement contrastive learning for motion representation
-
-3. **Multi-modal Fusion**: 
-   - Combine visual, inertial, and depth information
-   - Integrate IMU data for motion estimation
-   - Use depth maps for 3D scene understanding
-
-4. **Edge Computing**: 
-   - Optimize for mobile and embedded devices
-   - Develop hardware-specific acceleration
-   - Implement adaptive quality based on device capabilities
-
-5. **Real-time Global Motion**: 
-   - Develop efficient global motion estimation
-   - Implement streaming DCT computation
-   - Add incremental global motion updates
-
-6. **Advanced Motion Models**:
-   - Implement 3D scene flow estimation
-   - Add object-aware motion segmentation
-   - Develop physics-based motion modeling
-
-7. **Quality Assessment**:
-   - Develop automated quality metrics
-   - Implement perceptual quality evaluation
-   - Add user preference learning
-
 ## Experimental Results and Comparison
 
 ### Test Setup
@@ -617,33 +475,128 @@ The evaluation reveals fundamental trade-offs between the two approaches:
 | NNDVS | Online | Low | Good | Cropped | Real-time capture |
 | GlobalFlowNet | Offline | High | Very Good | Cropped | Post-processing |
 
-## Troubleshooting
 
-### Common Issues
+## Shortcomings and Future Improvements
 
-1. **CUDA Out of Memory**
-   ```bash
-   # Use CPU instead
-   export CUDA_VISIBLE_DEVICES=""
-   ```
+### Current Limitations
 
-2. **Missing Dependencies**
-   ```bash
-   # Reinstall requirements
-   pip install -r requirements.txt
-   ```
+#### NNDVS Limitations
+1. **Motion Estimation Dependency**: Quality limited by input motion accuracy from FAST+KLT
+2. **Window Size Sensitivity**: Performance varies with sliding window size (net_radius=15)
+3. **Simple Architecture**: Basic U-Net may not capture complex motion patterns
+4. **No Global Context**: Lacks global motion understanding beyond local path smoothing
+5. **Feature Tracking Failures**: KLT tracking can fail in low-texture regions
+6. **Homography Assumption**: Assumes planar scene motion, limiting effectiveness in 3D scenes
 
-3. **Video Codec Issues**
-   ```bash
-   # Install additional codecs
-   pip install imageio-ffmpeg
-   ```
+#### GlobalFlowNet Limitations
+1. **High Latency**: Cannot process frames in real-time due to batch processing requirement
+2. **Memory Intensive**: Requires significant GPU memory (37.5 MB model + intermediate features)
+3. **Field of View Loss**: Cropping reduces usable frame area (crop=0.8 by default)
+4. **Batch Processing**: Cannot handle streaming video, requires full video for processing
+5. **DCT Filtering Overhead**: DCT computation adds computational complexity
+6. **Multi-scale Dependency**: Performance depends on pyramid level configuration
 
-### Performance Optimization
+### Proposed Improvements
 
-- **GPU Memory**: Reduce batch size or use gradient checkpointing
-- **CPU Processing**: Use multiple workers for data loading
-- **Storage**: Use SSD for faster I/O operations
+#### For NNDVS
+1. **Enhanced Motion Estimation**: 
+   - Replace FAST+KLT with deep learning-based optical flow (RAFT, PWCNet)
+   - Implement robust feature matching with learned descriptors
+   - Add motion validation using temporal consistency
+
+2. **Attention Mechanisms**: 
+   - Add spatial attention to focus on important motion regions
+   - Implement temporal attention for long-range dependencies
+   - Use self-attention in U-Net skip connections
+
+3. **Multi-scale Processing**: 
+   - Implement pyramid-based processing similar to GlobalFlowNet
+   - Add multi-resolution path smoothing
+   - Use scale-aware loss functions
+
+4. **Global Motion Integration**: 
+   - Combine local path smoothing with global motion estimation
+   - Add DCT-based global motion filtering
+   - Implement adaptive global-local motion fusion
+
+#### For GlobalFlowNet
+1. **Real-time Adaptation**: 
+   - Develop online processing variants with sliding window approach
+   - Implement incremental DCT computation
+   - Add frame-by-frame processing capability
+
+2. **Memory Optimization**: 
+   - Implement model compression and quantization
+   - Use gradient checkpointing for memory efficiency
+   - Develop lightweight DCT filtering variants
+
+3. **Field of View Preservation**: 
+   - Develop inpainting methods to avoid cropping
+   - Implement content-aware resizing
+   - Add seam carving for boundary preservation
+
+4. **Streaming Support**: 
+   - Enable frame-by-frame processing
+   - Implement buffered processing with minimal latency
+   - Add adaptive quality adjustment based on processing time
+
+#### General Improvements
+1. **Hybrid Approaches**: 
+   - Combine online and offline processing
+   - Use NNDVS for real-time preview, GlobalFlowNet for final output
+   - Implement quality-adaptive processing
+
+2. **Perceptual Metrics**: 
+   - Integrate human perception-based evaluation
+   - Add perceptual loss functions
+   - Implement user study validation
+
+3. **Mobile Optimization**: 
+   - Develop mobile-specific architectures
+   - Implement model pruning and quantization
+   - Add hardware-specific optimizations (NPU, GPU)
+
+4. **Joint Processing**: 
+   - Integrate with denoising, exposure compensation
+   - Add super-resolution capabilities
+   - Implement end-to-end video enhancement pipeline
+
+### Future Research Directions
+
+1. **Neural Architecture Search**: 
+   - Automatically discover optimal architectures for video stabilization
+   - Search for efficient online processing networks
+   - Optimize for specific hardware constraints
+
+2. **Self-supervised Learning**: 
+   - Reduce dependency on labeled training data
+   - Use synthetic motion generation for training
+   - Implement contrastive learning for motion representation
+
+3. **Multi-modal Fusion**: 
+   - Combine visual, inertial, and depth information
+   - Integrate IMU data for motion estimation
+   - Use depth maps for 3D scene understanding
+
+4. **Edge Computing**: 
+   - Optimize for mobile and embedded devices
+   - Develop hardware-specific acceleration
+   - Implement adaptive quality based on device capabilities
+
+5. **Real-time Global Motion**: 
+   - Develop efficient global motion estimation
+   - Implement streaming DCT computation
+   - Add incremental global motion updates
+
+6. **Advanced Motion Models**:
+   - Implement 3D scene flow estimation
+   - Add object-aware motion segmentation
+   - Develop physics-based motion modeling
+
+7. **Quality Assessment**:
+   - Develop automated quality metrics
+   - Implement perceptual quality evaluation
+   - Add user preference learning
 
 ## Research Applications
 
@@ -674,10 +627,3 @@ This case study is provided for educational and research purposes. Please refer 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests to improve this case study.
-
-## Acknowledgments
-
-- NNDVS authors for providing the online stabilization implementation
-- GlobalFlowNet team for the global motion estimation approach
-- OpenCV community for computer vision tools
-
