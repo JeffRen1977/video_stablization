@@ -1,4 +1,7 @@
-# Chapter 13 — Video Stabilization
+# Chapter 17 — Video Stabilization (Practical Implementation)
+
+> **Reference**: This repository contains the practical implementation code for Chapter 17 of "Mobile Computational Photography".  
+> **Papers**: See `Papers/` folder for the research papers referenced in this chapter.
 
 ## Overview
 
@@ -18,7 +21,7 @@ This case study demonstrates two influential video stabilization approaches:
 
 ## Key Learning Objectives
 
-By the end of this chapter, readers will understand:
+By the end of Chapter 17, readers will understand:
 
 1. **Why video stabilization matters** for mobile cameras and downstream applications
 2. **Core stabilization pipeline** components and their trade-offs
@@ -26,98 +29,532 @@ By the end of this chapter, readers will understand:
 4. **Quality evaluation** metrics and their practical application
 5. **Implementation considerations** for real-world deployment
 
-## Project Structure
+## 📚 Papers Referenced in Chapter 17
+
+This chapter implements and evaluates two state-of-the-art methods:
+
+1. **NNDVS (ICCV 2023)**: Minimum Latency Deep Online Video Stabilization
+   - **Paper**: `Papers/Minimum Latency Deep Online Video Stabilization.pdf`
+   - **Original Repository**: [liuzhen03/NNDVS](https://github.com/liuzhen03/NNDVS)
+   - **Key Innovation**: Online processing with minimal latency using U-Net path smoothing
+
+2. **GlobalFlowNet (WACV 2023)**: Video Stabilization using Deep Distilled Global Motion Estimates
+   - **Paper**: `Papers/GlobalFlowNet- Video Stabilization using Deep Distilled Global Motion Estimates.pdf`
+   - **Original Repository**: [GlobalFlowNet/GlobalFlowNet](https://github.com/GlobalFlowNet/GlobalFlowNet)
+   - **Key Innovation**: DCT-based global motion estimation with PWCNet
+
+> **Note**: We recommend reading these papers before diving into the implementation code.
+
+## Repository Structure (Organized for Chapter 17)
+
+This repository is organized to follow the flow of Chapter 17, making it easy to understand how each code section relates to the chapter content.
 
 ```
 video_stabilization/
-├── experiments/stabilization/     # Core implementation and evaluation
-├── samples/stabilization/         # Sample data and generation
-├── thirdparty/                    # External method repositories
-├── notebooks/                     # Interactive analysis
-├── data/checkpoints/              # Pretrained model weights
+│
+├── README.md                      # This file - Main guide for Chapter 17
+├── Papers/                        # 📄 Research papers referenced in Chapter 17
+│   ├── Minimum Latency Deep Online Video Stabilization.pdf
+│   └── GlobalFlowNet- Video Stabilization using Deep Distilled Global Motion Estimates.pdf
+│
+├── 01_Introduction/               # 📖 Section 1: Introduction to Video Stabilization
+│   ├── notebooks/
+│   │   └── video_stabilization_analysis.ipynb
+│   └── README.md
+│
+├── 02_Implementation/             # 🔧 Section 2: Implementation of Methods
+│   ├── nndvs/                    # NNDVS implementation
+│   │   ├── run_nndvs.sh
+│   │   └── README.md
+│   └── globalflownet/            # GlobalFlowNet implementation
+│       ├── run_globalflownet.sh
+│       └── README.md
+│
+├── 03_Evaluation/                 # 📊 Section 3: Evaluation Framework
+│   ├── eval_video.py             # Main evaluation script
+│   ├── compare_methods.py        # Comparison tool
+│   ├── results/                  # Evaluation results
+│   └── README.md
+│
+├── 04_Experiments/                # 🧪 Section 4: Experimental Results
+│   ├── results/                  # Experimental outputs
+│   └── README.md
+│
+├── samples/stabilization/         # 📹 Sample data for testing
+│   ├── prepare_samples.py        # Generate synthetic shaky videos
+│   └── shaky.mp4                 # Sample input video
+│
+├── thirdparty/                    # 🔗 Original open-source implementations
+│   ├── NNDVS/                    # Original NNDVS repository
+│   └── GlobalFlowNet/            # Original GlobalFlowNet repository
+│
 ├── requirements.txt               # Python dependencies
-├── setup_environment.sh          # Environment setup
-└── README.md                     # Detailed usage instructions
+├── setup_environment.sh          # Environment setup script (uses existing virtual_env)
+├── run_complete_pipeline.sh      # 🚀 Complete pipeline script (recommended - runs everything)
+├── doc/                           # 📚 Additional documentation
+│   ├── QUICK_START.md            # Quick reference guide
+│   ├── CHAPTER17_STRUCTURE.md    # Repository structure guide
+│   └── README.md                 # Documentation index
+└── README.md                      # This file - Main guide
+
+**Note**: The virtual environment (`virtual_env/`) is located in the parent directory, not in this project folder.
 ```
+
+## How to Use This Repository with Chapter 17
+
+### 📖 Reading Order (Following Chapter 17)
+
+1. **Start with the Papers** (`Papers/` folder)
+   - Read the research papers to understand the theoretical foundations
+   - Papers are referenced throughout Chapter 17
+
+2. **Follow the Implementation Sections**
+   - **Section 17.1**: Introduction → See `01_Introduction/notebooks/video_stabilization_analysis.ipynb`
+   - **Section 17.2**: Implementation → See `02_Implementation/` (NNDVS and GlobalFlowNet)
+   - **Section 17.3**: Evaluation → See `03_Evaluation/eval_video.py`
+   - **Section 17.4**: Experimental Results → See `04_Experiments/results/`
+
+3. **Run the Code Examples**
+   - Each section in Chapter 17 has corresponding code examples
+   - Follow the Quick Start guide below to run implementations
 
 ## Environment Setup
 
 ### Prerequisites
-- Python 3.9+
-- Git
-- FFmpeg (for video processing)
+- **Python 3.9+** (Python 3.9 or 3.10 recommended)
+- **Git** (for cloning the repository)
+- **FFmpeg** (for video processing)
+  - macOS: `brew install ffmpeg`
+  - Linux: `sudo apt-get install ffmpeg`
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
-### 1. Clone and Setup
-```bash
-# Clone the repository
-git clone <repository-url>
-cd video_stabilization
-
-# Make setup script executable and run it
-chmod +x setup_environment.sh
-./setup_environment.sh
+### Directory Structure
+The virtual environment is located **one directory above** the project:
+```
+Mobile_Computational_photograph/
+├── virtual_env/             # Virtual environment (one level up)
+└── video_stablization/      # This project directory
+    ├── README.md
+    ├── requirements.txt
+    ├── 01_Introduction/
+    ├── 02_Implementation/
+    ├── 03_Evaluation/
+    ├── 04_Experiments/
+    └── ...
 ```
 
-### 2. Activate Virtual Environment
+### Step-by-Step Setup Instructions
+
+> **Important**: This project uses the **existing virtual environment** located in the parent directory (`../virtual_env/`). Do not create a new virtual environment.
+
+#### Step 1: Navigate to Project Directory
 ```bash
-source venv/bin/activate
+# Navigate to the project directory
+cd /path/to/Mobile_Computational_photograph/video_stablization
 ```
 
-### 3. Verify Installation
+#### Step 2: Activate Existing Virtual Environment
 ```bash
-# Check Python version
+# Activate the existing virtual environment from the parent directory
+source ../virtual_env/bin/activate
+
+# Verify activation - you should see (venv) in your terminal prompt
+# Example: (venv) user@computer:~/video_stablization$
+
+# Verify Python path points to the parent virtual_env
+which python
+# Should show: .../Mobile_Computational_photograph/virtual_env/bin/python
+```
+
+**Note**: If the virtual environment doesn't exist yet, create it in the parent directory:
+```bash
+cd ..
+python3 -m venv virtual_env
+cd video_stablization
+source ../virtual_env/bin/activate
+```
+
+#### Step 3: Upgrade pip (Recommended)
+```bash
+# Upgrade pip to latest version (if needed)
+pip install --upgrade pip
+```
+
+#### Step 4: Install All Dependencies
+```bash
+# Make sure you're in the video_stablization directory with venv activated
+# Install all required packages from requirements.txt
+pip install -r requirements.txt
+
+# Install scikit-video separately (has Python 2 syntax, needs --no-compile flag)
+pip install scikit-video==1.1.11 --no-compile
+
+# This will install:
+# - PyTorch and torchvision (deep learning)
+# - OpenCV (computer vision)
+# - NumPy, SciPy (scientific computing)
+# - cvxopt (GlobalFlowNet dependency)
+# - scikit-video (installed separately with --no-compile)
+# - matplotlib, seaborn (visualization)
+# - And all other dependencies
+```
+
+**Installation Time**: This may take 5-15 minutes depending on your internet connection.
+
+**Note**: `scikit-video` has Python 2 syntax that causes installation errors. It must be installed separately with the `--no-compile` flag. See the troubleshooting section below for details.
+
+#### Step 5: Verify Installation
+```bash
+# Check Python version (should be 3.9+)
 python --version
 
-# Verify key packages
-python -c "import torch, cv2, numpy; print('All packages installed successfully!')"
+# Verify key packages are installed correctly
+python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+python -c "import cv2; print(f'OpenCV version: {cv2.__version__}')"
+python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
+
+# Comprehensive check
+python -c "
+import torch, torchvision, cv2, numpy, scipy
+import matplotlib, seaborn, imageio, tqdm
+import cvxopt, skvideo
+print('✅ All packages installed successfully!')
+"
 ```
 
-## Quick Start
+### Troubleshooting Installation
 
-### 1. Create Sample Data
+#### Issue: `scikit-video` installation fails with SyntaxError
+**Error**: `SyntaxError: Missing parentheses in call to 'print'`
+
+**Solution**: Install scikit-video separately with the `--no-compile` flag:
 ```bash
+pip install scikit-video==1.1.11 --no-compile
+```
+
+This skips bytecode compilation and avoids the Python 2 syntax error. The package will work correctly at runtime even without bytecode compilation.
+
+#### Issue: `pip install` fails for cvxopt
+```bash
+# On macOS, you may need:
+brew install gsl  # GNU Scientific Library
+pip install cvxopt
+
+# On Linux:
+sudo apt-get install libgsl-dev
+pip install cvxopt
+```
+
+#### Issue: PyTorch installation fails
+```bash
+# Install PyTorch separately (CPU version)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Or for CUDA (if you have NVIDIA GPU):
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+
+#### Issue: OpenCV import errors
+```bash
+# Reinstall OpenCV
+pip uninstall opencv-python opencv-contrib-python
+pip install opencv-python opencv-contrib-python
+```
+
+#### Issue: FFmpeg not found
+```bash
+# Verify FFmpeg is installed
+ffmpeg -version
+
+# If not installed:
+# macOS: brew install ffmpeg
+# Linux: sudo apt-get install ffmpeg
+```
+
+## Quick Start Guide
+
+> **Important**: This project uses the **existing virtual environment** in the parent directory (`../venv/`). Always activate it before running any code.
+
+### 🚀 One-Command Complete Pipeline
+
+The easiest way to run everything is using the complete pipeline script:
+
+```bash
+# From the video_stablization directory
+bash run_complete_pipeline.sh
+```
+
+This single command will:
+1. ✅ Verify environment setup
+2. ✅ Create sample video (if needed)
+3. ✅ Run NNDVS stabilization
+4. ✅ Run GlobalFlowNet stabilization
+5. ✅ Evaluate both methods
+6. ✅ Compare results
+7. ✅ Display summary
+
+**Options:**
+```bash
+# Use your own input video
+bash run_complete_pipeline.sh --input path/to/your/video.mp4
+
+# Skip environment setup (if already verified)
+bash run_complete_pipeline.sh --skip-setup
+
+# Skip evaluation and comparison (faster, just run stabilization)
+bash run_complete_pipeline.sh --skip-eval
+
+# Combine options
+bash run_complete_pipeline.sh --input my_video.mp4 --skip-setup
+```
+
+### Manual Step-by-Step Guide
+
+If you prefer to run steps manually:
+
+### Prerequisites Check
+Before running any code, ensure:
+1. ✅ **Virtual environment is activated**: `source ../venv/bin/activate`
+   - Verify: `which python` should show `../venv/bin/python`
+2. ✅ **You're in the `video_stablization/` directory**
+   - Verify: `pwd` should end with `video_stablization`
+3. ✅ **All dependencies are installed**: `pip list | grep torch`
+
+### Step 1: Prepare Sample Video
+
+First, create a test video for stabilization:
+
+```bash
+# Make sure you're in the video_stablization directory with venv activated
+# Check current directory
+pwd  # Should show: .../video_stablization
+
 # Generate synthetic shaky video for testing
 python samples/stabilization/prepare_samples.py \
     --output samples/stabilization/shaky.mp4 \
-    --duration 5 --fps 30
+    --duration 5 \
+    --fps 30
+
+# Verify video was created
+ls -lh samples/stabilization/shaky.mp4
 ```
 
-### 2. Run Video Stabilization
+**Expected Output**: A 5-second shaky video at 30 FPS will be created.
 
-#### NNDVS (Deep Learning)
+### Step 2: Run Video Stabilization
+
+#### Option A: NNDVS (Deep Learning - Online Method)
+
 ```bash
-bash experiments/stabilization/run_nndvs.sh \
+# From the video_stablization directory
+bash 02_Implementation/nndvs/run_nndvs.sh \
     --repo thirdparty/NNDVS \
     --input samples/stabilization/shaky.mp4 \
     --ckpt thirdparty/NNDVS/pretrained/pretrained_model.pth.tar \
-    --out experiments/stabilization/results/nndvs_out.mp4
+    --out 04_Experiments/results/nndvs_out.mp4
+
+# Check if output was created
+ls -lh 04_Experiments/results/nndvs_out.mp4
 ```
 
-#### GlobalFlowNet (Global Motion)
+**Expected Runtime**: 1-5 minutes depending on video length and hardware.
+
+**What it does**:
+- Loads the NNDVS U-Net model
+- Processes video frame-by-frame
+- Applies real-time stabilization
+- Outputs stabilized video
+
+#### Option B: GlobalFlowNet (Global Motion - Offline Method)
+
 ```bash
-bash experiments/stabilization/run_globalflownet.sh \
+# From the video_stablization directory
+bash 02_Implementation/globalflownet/run_globalflownet.sh \
     --repo thirdparty/GlobalFlowNet \
     --input samples/stabilization/shaky.mp4 \
     --ckpt thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth \
-    --out experiments/stabilization/results/globalflownet_out.mp4
+    --out 04_Experiments/results/globalflownet_out.mp4
+
+# Check if output was created
+ls -lh 04_Experiments/results/globalflownet_out.mp4
 ```
 
-### 3. Evaluate Results
+**Expected Runtime**: 5-15 minutes depending on video length and hardware.
+
+**What it does**:
+- Loads the GlobalFlowNet PWCNet model
+- Computes optical flow for all frames
+- Applies DCT-based global motion filtering
+- Outputs stabilized video
+
+### Step 3: Evaluate Stabilization Quality
+
+Evaluate a single stabilized video:
+
 ```bash
-# Evaluate stabilization quality
-python experiments/stabilization/eval_video.py \
-    --input experiments/stabilization/results/nndvs_out.mp4 \
+# Evaluate NNDVS output
+python 03_Evaluation/eval_video.py \
+    --input 04_Experiments/results/nndvs_out.mp4 \
     --original samples/stabilization/shaky.mp4 \
-    --output experiments/stabilization/results/evaluation_results.json
+    --output 03_Evaluation/results/nndvs_evaluation.json
+
+# View evaluation results
+cat 03_Evaluation/results/nndvs_evaluation.json | python -m json.tool
 ```
 
-### 4. Compare Methods
+**Metrics Calculated**:
+- Temporal smoothness (translation/rotation variance)
+- Boundary crop ratio
+- Processing time and FPS
+- Frame count and duration
+
+### Step 4: Compare Multiple Methods
+
+Compare both methods side-by-side:
+
 ```bash
-# Compare multiple stabilization approaches
-python experiments/stabilization/compare_methods.py \
+# Compare NNDVS and GlobalFlowNet
+python 03_Evaluation/compare_methods.py \
     --input samples/stabilization/shaky.mp4 \
     --methods nndvs globalflownet \
-    --output experiments/stabilization/results/comparison/
+    --output 03_Evaluation/results/comparison/
+
+# View comparison results
+ls -lh 03_Evaluation/results/comparison/
+```
+
+**Output Files**:
+- `comparison_summary.json` - Quantitative comparison
+- `comparison_report.txt` - Human-readable report
+- Individual evaluation JSON files for each method
+
+### Step 5: View Results
+
+```bash
+# List all output videos
+ls -lh 04_Experiments/results/*.mp4
+
+# View evaluation metrics
+cat 03_Evaluation/results/comparison/comparison_summary.json | python -m json.tool
+
+# Open videos (macOS)
+open 04_Experiments/results/nndvs_out.mp4
+open 04_Experiments/results/globalflownet_out.mp4
+```
+
+### Complete Workflow Example
+
+Here's a complete workflow from start to finish using the existing virtual environment:
+
+```bash
+# 1. Navigate to project and activate existing virtual environment
+cd /path/to/Mobile_Computational_photograph/video_stablization
+source ../virtual_env/bin/activate  # Uses existing virtual_env in parent directory
+
+# Verify virtual_env is activated
+which python  # Should show: .../virtual_env/bin/python
+
+# 2. Create sample video
+python samples/stabilization/prepare_samples.py \
+    --output samples/stabilization/shaky.mp4 \
+    --duration 5 --fps 30
+
+# 3. Run NNDVS
+bash 02_Implementation/nndvs/run_nndvs.sh \
+    --repo thirdparty/NNDVS \
+    --input samples/stabilization/shaky.mp4 \
+    --ckpt thirdparty/NNDVS/pretrained/pretrained_model.pth.tar \
+    --out 04_Experiments/results/nndvs_out.mp4
+
+# 4. Run GlobalFlowNet
+bash 02_Implementation/globalflownet/run_globalflownet.sh \
+    --repo thirdparty/GlobalFlowNet \
+    --input samples/stabilization/shaky.mp4 \
+    --ckpt thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth \
+    --out 04_Experiments/results/globalflownet_out.mp4
+
+# 5. Compare methods
+python 03_Evaluation/compare_methods.py \
+    --input samples/stabilization/shaky.mp4 \
+    --methods nndvs globalflownet \
+    --output 03_Evaluation/results/comparison/
+
+# 6. View results
+open 04_Experiments/results/*.mp4
+```
+
+### Troubleshooting Runtime Issues
+
+#### Issue: "CUDA not available" warning
+**Solution**: This is normal if you don't have a GPU. The code will automatically use CPU. Processing will be slower but will work.
+
+#### Issue: "Checkpoint not found" error
+```bash
+# Verify checkpoint files exist
+ls -lh thirdparty/NNDVS/pretrained/pretrained_model.pth.tar
+ls -lh thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth
+```
+
+#### Issue: "ModuleNotFoundError"
+```bash
+# Reinstall missing package
+pip install <package_name>
+
+# Or reinstall all dependencies
+pip install -r requirements.txt --force-reinstall
+```
+
+#### Issue: Video output is corrupted
+```bash
+# Check FFmpeg installation
+ffmpeg -version
+
+# Reinstall imageio-ffmpeg
+pip install --upgrade imageio-ffmpeg
+```
+
+### Working Directory Notes
+
+**Important**: 
+- All commands must be run from the `video_stablization/` directory
+- The project uses the **existing virtual environment** in the parent directory (`../virtual_env/`)
+
+```bash
+# Correct working directory structure:
+/path/to/Mobile_Computational_photograph/
+├── virtual_env/             # ← Existing virtual environment (shared across projects)
+│   └── bin/
+│       └── activate          # Activate with: source ../virtual_env/bin/activate
+└── video_stablization/      # ← You should be HERE when running commands
+    ├── README.md
+    ├── requirements.txt
+    ├── 01_Introduction/
+    ├── 02_Implementation/
+    ├── 03_Evaluation/
+    └── 04_Experiments/
+```
+
+**Quick Verification**:
+```bash
+# 1. Verify you're in the right directory
+pwd
+# Should end with: .../video_stablization
+
+# 2. Verify existing virtual_env is activated
+which python
+# Should show: .../Mobile_Computational_photograph/virtual_env/bin/python
+
+# 3. Check virtual_env location
+echo $VIRTUAL_ENV
+# Should show: .../Mobile_Computational_photograph/virtual_env
+```
+
+**Note**: If the virtual environment doesn't exist yet, create it in the parent directory:
+```bash
+cd ..
+python3 -m venv virtual_env
+cd video_stablization
+source ../virtual_env/bin/activate
 ```
 ## Video Stabilization Algorithms: Architecture and Analysis
 
@@ -597,6 +1034,42 @@ class ComposedStabilizer():
    - Develop automated quality metrics
    - Implement perceptual quality evaluation
    - Add user preference learning
+
+## Navigation Guide: Code to Chapter 17 Sections
+
+This table helps you navigate between Chapter 17 content and the corresponding code in this repository:
+
+| Chapter 17 Section | Code Location | Description |
+|-------------------|---------------|-------------|
+| **17.1 Introduction** | `01_Introduction/notebooks/video_stabilization_analysis.ipynb` | Why video stabilization matters, background concepts |
+| **17.2.1 NNDVS Method** | `02_Implementation/nndvs/run_nndvs.sh`<br>`thirdparty/NNDVS/` | Online stabilization implementation with U-Net |
+| **17.2.2 GlobalFlowNet Method** | `02_Implementation/globalflownet/run_globalflownet.sh`<br>`thirdparty/GlobalFlowNet/` | Global motion estimation with DCT filtering |
+| **17.3 Evaluation Framework** | `03_Evaluation/eval_video.py`<br>`03_Evaluation/compare_methods.py` | Evaluation metrics and comparison tools |
+| **17.4 Experimental Results** | `04_Experiments/results/` | Experimental results, metrics, and analysis |
+
+### Quick Navigation Tips
+
+- **Reading Chapter 17.1?** → Open `01_Introduction/notebooks/video_stabilization_analysis.ipynb`
+- **Implementing Chapter 17.2.1 (NNDVS)?** → Use `02_Implementation/nndvs/run_nndvs.sh`
+- **Implementing Chapter 17.2.2 (GlobalFlowNet)?** → Use `02_Implementation/globalflownet/run_globalflownet.sh`
+- **Evaluating results (17.3)?** → Run `03_Evaluation/eval_video.py`
+- **Viewing results (17.4)?** → Check `04_Experiments/results/`
+
+## Additional Resources
+
+### Documentation
+- **Quick Start Guide**: See `doc/QUICK_START.md` for quick reference
+- **Structure Guide**: See `doc/CHAPTER17_STRUCTURE.md` for detailed repository organization
+- **Documentation Index**: See `doc/README.md` for all documentation files
+
+### Section-Specific Guides
+- **Section 17.1**: See `01_Introduction/README.md` for introduction materials
+- **Section 17.2**: See `02_Implementation/nndvs/README.md` and `02_Implementation/globalflownet/README.md`
+- **Section 17.3**: See `03_Evaluation/README.md` for evaluation framework
+- **Section 17.4**: See `04_Experiments/README.md` for experimental results
+
+### Research Papers
+- **Paper References**: See `Papers/README.md` for paper citations and details
 
 ## Research Applications
 

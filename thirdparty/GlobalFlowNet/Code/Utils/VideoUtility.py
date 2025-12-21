@@ -13,8 +13,13 @@ from Utils.hashUtil import md5
 class VideoReader:
 
     def __init__(self, path, loadAllFrames=True, maxFrames=math.inf):
-        self.path = path
+        # Normalize path to handle relative paths and remove double slashes
+        self.path = os.path.abspath(os.path.normpath(path))
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f"Video file not found: {self.path}")
         self.video = cv2.VideoCapture(self.path)
+        if not self.video.isOpened():
+            raise IOError(f"Could not open video file: {self.path}")
         self.fps = self.video.get(cv2.CAP_PROP_FPS)
         self.width = int(self.video.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))

@@ -37,13 +37,13 @@ class VideoStabilizationComparator:
             'nndvs': {
                 'repo': 'thirdparty/NNDVS',
                 'checkpoint': 'thirdparty/NNDVS/pretrained/pretrained_model.pth.tar',
-                'script': 'experiments/stabilization/run_nndvs.sh',
+                'script': '02_Implementation/nndvs/run_nndvs.sh',
                 'description': 'NNDVS - Online Low-Latency'
             },
             'globalflownet': {
                 'repo': 'thirdparty/GlobalFlowNet',
                 'checkpoint': 'thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth',
-                'script': 'experiments/stabilization/run_globalflownet.sh',
+                'script': '02_Implementation/globalflownet/run_globalflownet.sh',
                 'description': 'GlobalFlowNet - Global Motion'
             },
         }

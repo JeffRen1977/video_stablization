@@ -21,7 +21,11 @@ class GlobalPWCDCT(GlobalPWCBase):
     def getUniformGrid(self, shape):
         M = shape[-1]
         N = shape[-2]
-        UY, UX = torch.meshgrid(torch.arange(N).cuda(), torch.arange(M).cuda())
+        # Use CPU if CUDA not available
+        if torch.cuda.is_available():
+            UY, UX = torch.meshgrid(torch.arange(N).cuda(), torch.arange(M).cuda())
+        else:
+            UY, UX = torch.meshgrid(torch.arange(N), torch.arange(M))
         return UX, UY
 
     def getDCTBase(self, X, Y, u, v):

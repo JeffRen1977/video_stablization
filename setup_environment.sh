@@ -2,30 +2,90 @@
 
 # Video Stabilization Environment Setup Script
 # This script sets up the environment for the video stabilization case study
+# 
+# IMPORTANT: This script REQUIRES an existing virtual environment in the parent directory (../virtual_env/)
+# It will NOT create a new virtual environment. If the virtual_env doesn't exist, the script will exit with an error.
+# 
+# To create the virtual environment manually (if needed):
+#   cd ..  # Go to parent directory
+#   python3 -m venv virtual_env
+#   cd video_stablization
+#   source ../virtual_env/bin/activate
 
 set -e
 
-echo "Setting up Video Stabilization Environment..."
+# Get the script directory and ensure we're in the project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-# Create virtual environment
-echo "Creating virtual environment..."
-python3 -m venv venv
-source venv/bin/activate
+echo "Setting up Video Stabilization Environment..."
+echo "Project directory: $SCRIPT_DIR"
+
+# Verify we're in the right directory (should contain README.md and requirements.txt)
+if [ ! -f "README.md" ] || [ ! -f "requirements.txt" ]; then
+    echo "Error: This script must be run from the video_stablization project root directory"
+    echo "Current directory: $SCRIPT_DIR"
+    exit 1
+fi
+
+# Check if virtual environment exists in parent directory
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+VENV_PATH="$PARENT_DIR/virtual_env"
+
+if [ ! -d "$VENV_PATH" ]; then
+    echo "Error: Virtual environment not found in parent directory: $VENV_PATH"
+    echo ""
+    echo "This script requires an existing virtual environment in the parent directory."
+    echo "Please create it manually:"
+    echo "  cd $PARENT_DIR"
+    echo "  python3 -m venv virtual_env"
+    echo "  cd video_stablization"
+    echo "  source ../virtual_env/bin/activate"
+    echo ""
+    exit 1
+fi
+
+echo "Using existing virtual environment at $VENV_PATH"
+source "$VENV_PATH/bin/activate"
+
+# Verify venv activation
+if [ -z "$VIRTUAL_ENV" ]; then
+    echo "Error: Failed to activate virtual environment"
+    exit 1
+fi
+
+if [ "$VIRTUAL_ENV" != "$VENV_PATH" ]; then
+    echo "Error: Virtual environment path mismatch"
+    echo "Expected: $VENV_PATH"
+    echo "Got: $VIRTUAL_ENV"
+    exit 1
+fi
+
+echo "Virtual environment activated: $VIRTUAL_ENV"
 
 # Upgrade pip
 echo "Upgrading pip..."
 pip install --upgrade pip
 
-# Install requirements
+# Install requirements (excluding scikit-video which has Python 2 syntax issues)
 echo "Installing Python dependencies..."
+echo "Note: scikit-video will be installed separately with --no-compile flag"
 pip install -r requirements.txt
+
+# Install scikit-video separately with --no-compile to avoid Python 2 syntax errors
+echo "Installing scikit-video (required for GlobalFlowNet)..."
+pip install scikit-video==1.1.11 --no-compile || {
+    echo "Warning: scikit-video installation failed. You can install it manually:"
+    echo "  pip install scikit-video==1.1.11 --no-compile"
+    echo "This package has Python 2 syntax and requires the --no-compile flag."
+}
 
 # Create necessary directories
 echo "Creating project directories..."
 mkdir -p thirdparty
-mkdir -p experiments/stabilization/results
+mkdir -p 03_Evaluation/results
+mkdir -p 04_Experiments/results
 mkdir -p samples/stabilization
-mkdir -p data/checkpoints
 
 # Clone NNDVS repository
 echo "Cloning NNDVS repository..."
@@ -134,11 +194,16 @@ echo ""
 echo "Environment setup complete!"
 echo ""
 echo "Next steps:"
-echo "1. Activate the virtual environment: source venv/bin/activate"
-echo "2. Download pretrained checkpoints to data/checkpoints/"
-echo "3. Create sample videos: python samples/stabilization/prepare_samples.py"
-echo "4. Run stabilization: bash experiments/stabilization/run_nndvs.sh --repo thirdparty/NNDVS --input samples/stabilization/shaky.mp4 --ckpt data/checkpoints/pretrained.pth --out experiments/stabilization/results/nndvs_out.mp4"
-echo "5. Evaluate results: python experiments/stabilization/eval_video.py --input experiments/stabilization/results/nndvs_out.mp4 --original samples/stabilization/shaky.mp4"
+echo "1. Activate the virtual environment: source ../virtual_env/bin/activate"
+echo "2. Verify checkpoints exist:"
+echo "   - thirdparty/NNDVS/pretrained/pretrained_model.pth.tar"
+echo "   - thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth"
+echo "3. Create sample videos: python samples/stabilization/prepare_samples.py --output samples/stabilization/shaky.mp4 --duration 5 --fps 30"
+echo "4. Run complete pipeline: bash run_complete_pipeline.sh"
+echo "   Or run methods individually:"
+echo "   - NNDVS: bash 02_Implementation/nndvs/run_nndvs.sh --repo thirdparty/NNDVS --input samples/stabilization/shaky.mp4 --ckpt thirdparty/NNDVS/pretrained/pretrained_model.pth.tar --out 04_Experiments/results/nndvs_out.mp4"
+echo "   - GlobalFlowNet: bash 02_Implementation/globalflownet/run_globalflownet.sh --repo thirdparty/GlobalFlowNet --input samples/stabilization/shaky.mp4 --ckpt thirdparty/GlobalFlowNet/Code/GlobalFlowNets/trainedModels/GFlowNet.pth --out 04_Experiments/results/globalflownet_out.mp4"
+echo "5. Evaluate results: python 03_Evaluation/eval_video.py --input 04_Experiments/results/nndvs_out.mp4 --original samples/stabilization/shaky.mp4 --output 03_Evaluation/results/evaluation_results.json"
 echo ""
-echo "For detailed instructions, see README.md"
+echo "For detailed instructions, see README.md or doc/QUICK_START.md"
 

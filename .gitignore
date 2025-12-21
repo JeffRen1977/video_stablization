@@ -63,6 +63,8 @@ temp/
 tmp/
 *.tmp
 *.temp
+temp_motion.npy
+*.npy
 
 # Logs
 *.log

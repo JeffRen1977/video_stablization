@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # GlobalFlowNet Video Stabilization Script
-# Usage: bash experiments/stabilization/run_globalflownet.sh --repo <path> --input <video> --ckpt <checkpoint> --out <output>
+# Usage: bash 02_Implementation/globalflownet/run_globalflownet.sh --repo <path> --input <video> --ckpt <checkpoint> --out <output>
 
 set -e
 
@@ -91,20 +91,24 @@ cd "$REPO_PATH"
 # Set CUDA device
 export CUDA_VISIBLE_DEVICES=$GPU_ID
 
+# Convert paths to absolute paths to avoid relative path issues
+INPUT_VIDEO_ABS=$(cd "$(dirname "$INPUT_VIDEO")" && pwd)/$(basename "$INPUT_VIDEO")
+OUTPUT_VIDEO_ABS=$(cd "$(dirname "$OUTPUT_VIDEO")" && pwd)/$(basename "$OUTPUT_VIDEO")
+
 # Try to run the GlobalFlowNet stabilizeVideo.py script
 if [[ -f "Code/stabilizeVideo.py" ]]; then
     echo "Running GlobalFlowNet stabilizeVideo.py..."
     cd Code
     python3 stabilizeVideo.py \
-        --inpVideoPath "../$INPUT_VIDEO" \
-        --outVideoPath "../$OUTPUT_VIDEO" \
+        --inpVideoPath "$INPUT_VIDEO_ABS" \
+        --outVideoPath "$OUTPUT_VIDEO_ABS" \
         --maxAffineCrop 0.8
     cd ..
 elif [[ -f "stabilizeVideo.py" ]]; then
     echo "Running stabilizeVideo.py..."
     python3 stabilizeVideo.py \
-        --inpVideoPath "$INPUT_VIDEO" \
-        --outVideoPath "$OUTPUT_VIDEO" \
+        --inpVideoPath "$INPUT_VIDEO_ABS" \
+        --outVideoPath "$OUTPUT_VIDEO_ABS" \
         --maxAffineCrop 0.8
 else
     echo "Error: GlobalFlowNet stabilizeVideo.py not found"

@@ -1,39 +1,76 @@
 # Video Stabilization Case Study - Requirements
-# Core dependencies for NNDVS and evaluation
+# Complete dependencies for Chapter 17 implementation
+# 
+# Installation (using existing virtual environment in parent directory): 
+#   1. Activate existing virtual environment: source ../virtual_env/bin/activate
+#   2. Install dependencies: pip install -r requirements.txt
+#   3. Install scikit-video separately: pip install scikit-video==1.1.11 --no-compile
+# 
+# Note: This project uses the existing virtual_env/ in the parent directory.
+# Do not create a new virtual environment in this project folder.
 
+# ============================================================================
 # Deep Learning Framework
+# ============================================================================
 torch>=1.9.0
 torchvision>=0.10.0
 
+# ============================================================================
 # Computer Vision
+# ============================================================================
 opencv-python>=4.5.0
 opencv-contrib-python>=4.5.0
 
+# ============================================================================
 # Image Processing
+# ============================================================================
 Pillow>=8.0.0
 scikit-image>=0.18.0
 
+# ============================================================================
 # Scientific Computing
-numpy>=1.21.0
+# ============================================================================
+numpy>=1.21.0,<2.0.0  # Compatible with GlobalFlowNet
 scipy>=1.7.0
 
+# ============================================================================
+# GlobalFlowNet Specific Dependencies
+# ============================================================================
+cvxopt>=1.3.0          # Required for GlobalFlowNet path stabilization
+# scikit-video>=1.1.11  # NOTE: Install separately with --no-compile flag
+#                       # Command: pip install scikit-video==1.1.11 --no-compile
+#                       # Reason: Has Python 2 syntax that causes installation errors
+
+# ============================================================================
 # Visualization
+# ============================================================================
 matplotlib>=3.4.0
 seaborn>=0.11.0
 
+# ============================================================================
 # Video Processing
+# ============================================================================
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.0
 
+# ============================================================================
 # Utilities
+# ============================================================================
 tqdm>=4.62.0
-argparse
-pathlib
+packaging>=20.0
+protobuf>=3.20.0
+setuptools>=60.0
+tensorboardX>=2.5.0
+typing-extensions>=4.0.0
 
+# ============================================================================
 # Optional: For advanced evaluation
+# ============================================================================
 scikit-learn>=1.0.0
 
-# Development tools (optional)
+# ============================================================================
+# Development tools (for Jupyter notebooks)
+# ============================================================================
 jupyter>=1.0.0
 notebook>=6.4.0
-
+ipykernel>=6.0.0

@@ -175,7 +175,11 @@ class PWCNet(nn.Module):
 
         vgrid = vgrid.permute(0, 2, 3, 1)
         output = nn.functional.grid_sample(x, vgrid)
-        mask = torch.autograd.Variable(torch.ones(x.size())).cuda()
+        # Use same device as x
+        if x.is_cuda:
+            mask = torch.autograd.Variable(torch.ones(x.size())).cuda()
+        else:
+            mask = torch.autograd.Variable(torch.ones(x.size()))
         mask = nn.functional.grid_sample(mask, vgrid)
 
         # if W==128:
@@ -296,8 +300,13 @@ class PWCNet(nn.Module):
             im2 = im2 / 255.0
         im1 = im1.astype('float32')
         im2 = im2.astype('float32')
-        im1 = torch.tensor(np.squeeze(np.swapaxes(im1[None], 0, 3))[None]).cuda()
-        im2 = torch.tensor(np.squeeze(np.swapaxes(im2[None], 0, 3))[None]).cuda()
+        # Use CUDA if available, otherwise use CPU
+        if torch.cuda.is_available():
+            im1 = torch.tensor(np.squeeze(np.swapaxes(im1[None], 0, 3))[None]).cuda()
+            im2 = torch.tensor(np.squeeze(np.swapaxes(im2[None], 0, 3))[None]).cuda()
+        else:
+            im1 = torch.tensor(np.squeeze(np.swapaxes(im1[None], 0, 3))[None])
+            im2 = torch.tensor(np.squeeze(np.swapaxes(im2[None], 0, 3))[None])
         flow = self.estimateFlowFull(im1, im2)
         flow = np.squeeze(np.swapaxes(flow.data.cpu().numpy()[:, :, :, :, None], 1, 4))
 
@@ -317,4 +326,8 @@ def getPWCModel(path=None, loadInCPU=False):
             model.load_state_dict(data['state_dict'])
         else:
             model.load_state_dict(data)
-    return model.eval().cuda()
+    # Use CPU if CUDA not available
+    if torch.cuda.is_available():
+        return model.eval().cuda()
+    else:
+        return model.eval()

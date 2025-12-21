@@ -32,12 +32,17 @@ class JoinedAdaptiveGNetStabilizer():
         stabCoeffs = self.getStabilizationCoeffs(fwdCoeffs)
         nrFrames = self.frames.shape[0]
         stabFrames = torch.zeros_like(self.frames)
-        mask = torch.tensor(True).cuda()
+        if torch.cuda.is_available():
+            mask = torch.tensor(True).cuda()
+        else:
+            mask = torch.tensor(True)
         with torch.no_grad():
             i = 0
             while i < nrFrames:
                 stopIdx = min(i + CHUNKLEN, nrFrames)
-                batchFrames = self.frames[i:stopIdx].clone().cuda()
+                batchFrames = self.frames[i:stopIdx].clone()
+                if torch.cuda.is_available():
+                    batchFrames = batchFrames.cuda()
                 wrpFeilds = self.AffineUtil.getAffineGrids(stabCoeffs[i:stopIdx])
                 stabFrames[i:stopIdx] = grid_sample(batchFrames, wrpFeilds).data.cpu()
                 i = stopIdx
@@ -61,16 +66,21 @@ class JoinedAdaptiveGNetStabilizer():
 
         with torch.no_grad():
             i = 1
+            stopIdx = 1  # Initialize stopIdx to avoid UnboundLocalError
             while i < frames.shape[0]:
                 stopIdx = min(i + CHUNKLEN, frames.shape[0])
-                batchFrames = frames[i - 1:stopIdx].clone().cuda()
+                batchFrames = frames[i - 1:stopIdx].clone()
+                if torch.cuda.is_available():
+                    batchFrames = batchFrames.cuda()
                 sourceFrames = batchFrames[:-1]
                 targetFrames = batchFrames[1:]
                 flows = self.OptNet.estimateFlowFull(sourceFrames, targetFrames)
                 flowCoeffs[i:stopIdx] = self.AffineUtil.getFlowCoeffs(flows)
                 i = stopIdx
-            for iRes in range(stopIdx - 1, frames.shape[0]):
-                flowCoeffs[iRes] = flowCoeffs[stopIdx - 2]
+            # Only fill remaining frames if stopIdx was set and there are remaining frames
+            if stopIdx > 1 and stopIdx < frames.shape[0]:
+                for iRes in range(stopIdx - 1, frames.shape[0]):
+                    flowCoeffs[iRes] = flowCoeffs[stopIdx - 2]
             # flowCoeffs = torch.from_numpy(np.load('R0.npy').astype('float32')).cuda()
         return flowCoeffs
 
@@ -78,7 +88,9 @@ class JoinedAdaptiveGNetStabilizer():
         coeffs = fwdCoeffs
         cumCoeffs = torch.cumsum(coeffs, dim=0)
 
-        stabCoeffs = smoothPathStdQP(cumCoeffs.cpu().T, w=self.shape[-1], h=self.shape[-2], minOverlap=self.crop).T.cuda()
+        stabCoeffs = smoothPathStdQP(cumCoeffs.cpu().T, w=self.shape[-1], h=self.shape[-2], minOverlap=self.crop).T
+        if torch.cuda.is_available():
+            stabCoeffs = stabCoeffs.cuda()
         stabCoeffsRes = cumCoeffs - stabCoeffs
         return stabCoeffsRes
 

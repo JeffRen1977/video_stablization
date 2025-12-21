@@ -21,7 +21,11 @@ def getCropFeildDJ(mask):
     mask = mask.data.cpu().numpy()
     mask = fillHoles(mask)
     r, c, H, W = crop_mask(mask > 0)
-    Y, X = torch.meshgrid(1.0 * torch.linspace(r, r + H - 1, N).cuda(), 1.0 * torch.linspace(c, c + W - 1, M).cuda())
+    # Use CUDA if available
+    if torch.cuda.is_available():
+        Y, X = torch.meshgrid(1.0 * torch.linspace(r, r + H - 1, N).cuda(), 1.0 * torch.linspace(c, c + W - 1, M).cuda())
+    else:
+        Y, X = torch.meshgrid(1.0 * torch.linspace(r, r + H - 1, N), 1.0 * torch.linspace(c, c + W - 1, M))
     X = 2.0 * (X - M / 2.0) / M
     Y = 2.0 * (Y - N / 2.0) / N
     grid = torch.cat((X[:, :, None], Y[:, :, None]), dim=-1)
@@ -30,11 +34,18 @@ def getCropFeildDJ(mask):
 
 def getCropFeild(mask):
     mask = fillHoles(mask.data.cpu().numpy() > 0)
-    mask = torch.from_numpy(mask).cuda() * 1.0
+    # Use CUDA if available
+    if torch.cuda.is_available():
+        mask = torch.from_numpy(mask).cuda() * 1.0
+    else:
+        mask = torch.from_numpy(mask) * 1.0
     shape = mask.shape
     M = shape[1]
     N = shape[0]
-    UY, UX = torch.meshgrid(torch.arange(N).cuda(), torch.arange(M).cuda())
+    if torch.cuda.is_available():
+        UY, UX = torch.meshgrid(torch.arange(N).cuda(), torch.arange(M).cuda())
+    else:
+        UY, UX = torch.meshgrid(torch.arange(N), torch.arange(M))
     UX = 2.0 * (UX - M / 2.0) / M
     UY = 2.0 * (UY - N / 2.0) / N
     grid = torch.cat((UX[:, :, None], UY[:, :, None]), dim=-1)[None]

@@ -6,10 +6,13 @@ class AffineUility():
     def __init__(self, shape):
         self.shape = shape
 
-    def getUniformGrid(self, centered=False, cuda=True):
+    def getUniformGrid(self, centered=False, cuda=None):
         M = self.shape[-1]
         N = self.shape[-2]
-        if cuda:
+        # Default to CUDA if available, unless explicitly set to False
+        if cuda is None:
+            cuda = torch.cuda.is_available()
+        if cuda and torch.cuda.is_available():
             UY, UX = torch.meshgrid(1.0 * torch.arange(N).cuda(), 1.0 * torch.arange(M).cuda())
         else:
             UY, UX = torch.meshgrid(1.0 * torch.arange(N), 1.0 * torch.arange(M))
@@ -20,9 +23,13 @@ class AffineUility():
         return UX, UY
 
     def getFlowCoeffs(self, flows, frames=None):
-
-        coeffs = torch.zeros((flows.shape[0], 4)).cuda()
-        UX, UY = self.getUniformGrid(centered=True)
+        # Use CUDA if flows are on CUDA, otherwise use CPU
+        use_cuda = flows.is_cuda if hasattr(flows, 'is_cuda') and torch.cuda.is_available() else False
+        if use_cuda:
+            coeffs = torch.zeros((flows.shape[0], 4)).cuda()
+        else:
+            coeffs = torch.zeros((flows.shape[0], 4))
+        UX, UY = self.getUniformGrid(centered=True, cuda=use_cuda)
         UTheta = torch.atan(UY / (UX + 1e-6))
         UR = torch.sqrt(UX**2 + UY**2)
         UR[UR < 1] = 1
@@ -51,7 +58,7 @@ class AffineUility():
 
         return coeffs
 
-    def getAffineGrids(self, coeffs, cuda=True):
+    def getAffineGrids(self, coeffs, cuda=None):
         if len(coeffs.shape) == 1:
             coeffs = coeffs[None]
 
@@ -63,6 +70,9 @@ class AffineUility():
         scaleX = self.shape[1] / 2.0
         scaleY = self.shape[0] / 2.0
 
+        # Default to CUDA if input is on CUDA, otherwise use CPU
+        if cuda is None:
+            cuda = coeffs.is_cuda if hasattr(coeffs, 'is_cuda') and torch.cuda.is_available() else False
         UX, UY = self.getUniformGrid(centered=True, cuda=cuda)
 
         X = UX[None] * s * torch.cos(theta) + UY[None] * s * torch.sin(-theta) + tx

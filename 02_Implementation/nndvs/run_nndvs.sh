@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Video Stabilization Demo Script - NNDVS
-# Usage: bash experiments/stabilization/run_nndvs.sh --repo <path> --input <video> --ckpt <checkpoint> --out <output>
+# Usage: bash 02_Implementation/nndvs/run_nndvs.sh --repo <path> --input <video> --ckpt <checkpoint> --out <output>
 
 set -e
 
