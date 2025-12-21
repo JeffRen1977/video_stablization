@@ -74,9 +74,7 @@ if [[ ! -f "$CHECKPOINT" ]]; then
     exit 1
 fi
 
-# Create output directory if it doesn't exist
-OUTPUT_DIR=$(dirname "$OUTPUT_VIDEO")
-mkdir -p "$OUTPUT_DIR"
+# Output directory will be created during path conversion
 
 echo "Starting GlobalFlowNet video stabilization..."
 echo "Repository: $REPO_PATH"
@@ -85,15 +83,31 @@ echo "Checkpoint: $CHECKPOINT"
 echo "Output: $OUTPUT_VIDEO"
 echo "GPU: $GPU_ID"
 
+# Convert paths to absolute paths BEFORE changing directories
+# Use Python for reliable path resolution
+INPUT_VIDEO_ABS=$(python3 -c "import os; print(os.path.abspath('$INPUT_VIDEO'))")
+OUTPUT_VIDEO_ABS=$(python3 -c "import os; print(os.path.abspath('$OUTPUT_VIDEO'))")
+
+# Verify input video exists
+if [[ ! -f "$INPUT_VIDEO_ABS" ]]; then
+    echo "Error: Input video file not found: $INPUT_VIDEO_ABS"
+    echo "Original path: $INPUT_VIDEO"
+    exit 1
+fi
+
+# Create output directory if it doesn't exist
+OUTPUT_DIR=$(dirname "$OUTPUT_VIDEO_ABS")
+mkdir -p "$OUTPUT_DIR"
+
+echo "Resolved paths:"
+echo "  Input: $INPUT_VIDEO_ABS"
+echo "  Output: $OUTPUT_VIDEO_ABS"
+
 # Change to repository directory
 cd "$REPO_PATH"
 
 # Set CUDA device
 export CUDA_VISIBLE_DEVICES=$GPU_ID
-
-# Convert paths to absolute paths to avoid relative path issues
-INPUT_VIDEO_ABS=$(cd "$(dirname "$INPUT_VIDEO")" && pwd)/$(basename "$INPUT_VIDEO")
-OUTPUT_VIDEO_ABS=$(cd "$(dirname "$OUTPUT_VIDEO")" && pwd)/$(basename "$OUTPUT_VIDEO")
 
 # Try to run the GlobalFlowNet stabilizeVideo.py script
 if [[ -f "Code/stabilizeVideo.py" ]]; then

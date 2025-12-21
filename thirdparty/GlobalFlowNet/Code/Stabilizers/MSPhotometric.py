@@ -15,7 +15,11 @@ class MSPhotometric():
         self.span = span
         self.shape = [self.frames.shape[-2], self.frames.shape[-1]]
         self.OptNet = OptNet
-        self.OptNet = self.OptNet.eval().cuda()
+        # Use CPU if CUDA not available
+        if torch.cuda.is_available():
+            self.OptNet = self.OptNet.eval().cuda()
+        else:
+            self.OptNet = self.OptNet.eval()
         self.cf = cutoffFreq
         self.DCTUtil = DCTUtility(self.shape, cutoffFreq)
         self.PolyFit = PolyFit()
@@ -25,7 +29,10 @@ class MSPhotometric():
     def stabilizeFrames(self):
         frames = self.frames
         stabFrames = torch.zeros_like(frames)
-        mask = torch.tensor(True).cuda()
+        if torch.cuda.is_available():
+            mask = torch.tensor(True).cuda()
+        else:
+            mask = torch.tensor(True)
         for f in range(1, frames.shape[0] - 1):
             lSpan = min(f, self.span)
             rSpan = min(self.span, frames.shape[0] - 1 - f)
@@ -45,7 +52,9 @@ class MSPhotometric():
 
     def warp(self, img, stabCoeffs):
         grid = self.DCTUtil.cvtFlowCoeffs2Grid(stabCoeffs)
-        scale = torch.tensor([img.shape[-1], img.shape[-2]]).cuda()
+        scale = torch.tensor([img.shape[-1], img.shape[-2]])
+        if torch.cuda.is_available() and img.is_cuda:
+            scale = scale.cuda()
         grid = (2 * grid - scale[:, None, None]) / scale[:, None, None]
         grid = torch.swapdims(grid[:, :, :, None], 0, 3)
         stabFrame = torch.squeeze(F.grid_sample(img[None], grid))
@@ -75,7 +84,9 @@ class MSPhotometric():
         # dists = torch.abs(torch.linspace(-span,span,2*span+1)).cuda()
         # dists[span] = 1e6
         # stabCoeffs = stabCoeffs/dists[:, None, None, None]
-        gK = getGuassianKernel(span, span / 3.0).cuda()
+        gK = getGuassianKernel(span, span / 3.0)
+        if torch.cuda.is_available() and photometricWts.is_cuda:
+            gK = gK.cuda()
         gK[span] = 0
         gK = gK / gK.sum()
         wts = gK * photometricWts
@@ -86,18 +97,26 @@ class MSPhotometric():
 
     def getStabilizedFrame(self, frames, refIdx):
         span = min(refIdx, frames.shape[0] - 1 - refIdx)
-        refFrame = frames[refIdx, None].cuda()
+        refFrame = frames[refIdx, None]
+        if torch.cuda.is_available():
+            refFrame = refFrame.cuda()
         nrFrames = frames.shape[0]
 
-        coeffs = torch.zeros((nrFrames, 2, self.cf, self.cf)).cuda()
+        if torch.cuda.is_available():
+            coeffs = torch.zeros((nrFrames, 2, self.cf, self.cf)).cuda()
+            photometricWts = torch.ones(nrFrames).cuda()
+        else:
+            coeffs = torch.zeros((nrFrames, 2, self.cf, self.cf))
+            photometricWts = torch.ones(nrFrames)
         # flows = torch.zeros((nrFrames,2,self.cf,self.cf)).cuda()
 
-        photometricWts = torch.ones(nrFrames).cuda()
         with torch.no_grad():
             i = 0
             while i < nrFrames:
                 stopIdx = min(i + CHUNKLEN, nrFrames)
-                sampleFrames = frames[i:stopIdx].cuda()
+                sampleFrames = frames[i:stopIdx]
+                if torch.cuda.is_available():
+                    sampleFrames = sampleFrames.cuda()
                 refFrameBatch = refFrame.expand_as(sampleFrames)
                 flows = self.OptNet.estimateFlowFull(sampleFrames, refFrameBatch)
                 coeffs[i:stopIdx] = self.DCTUtil.getFlowCoeffs(flows)
