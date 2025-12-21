@@ -45,8 +45,14 @@ def create_synthetic_motion(video_path, output_motion_path):
     
     cap.release()
     
-    # Save motion data
+    # Save motion data with absolute path
+    output_motion_path = os.path.abspath(output_motion_path)
     np.save(output_motion_path, motion_data)
+    
+    # Verify file was created
+    if not os.path.exists(output_motion_path):
+        raise IOError(f"Failed to create motion data file: {output_motion_path}")
+    
     print(f"Synthetic motion data saved to: {output_motion_path}")
     
     return motion_data
@@ -54,8 +60,22 @@ def create_synthetic_motion(video_path, output_motion_path):
 def stabilize_video(input_video, output_video, model_path, net_radius=15, scale_factor=8):
     """Stabilize video using NNDVS model."""
     
-    # Create temporary motion file
-    motion_path = "temp_motion.npy"
+    # Convert input paths to absolute paths
+    input_video = os.path.abspath(input_video)
+    output_video = os.path.abspath(output_video)
+    model_path = os.path.abspath(model_path) if not os.path.isabs(model_path) else model_path
+    
+    # Create temporary motion file with absolute path to avoid path issues
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    motion_path = os.path.join(script_dir, "temp_motion.npy")
+    
+    # Ensure motion file doesn't exist from previous run
+    if os.path.exists(motion_path):
+        try:
+            os.remove(motion_path)
+        except:
+            pass
+    
     create_synthetic_motion(input_video, motion_path)
     
     # Load video
@@ -69,6 +89,8 @@ def stabilize_video(input_video, output_video, model_path, net_radius=15, scale_
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
     # Load motion data
+    if not os.path.exists(motion_path):
+        raise FileNotFoundError(f"Motion data file not found: {motion_path}")
     motion_data = np.load(motion_path)
     
     # Load model
@@ -90,9 +112,17 @@ def stabilize_video(input_video, output_video, model_path, net_radius=15, scale_
     # Bilinear upsample
     bilinear_upsample = nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)
     
-    # Setup output video writer
+    # Setup output video writer with absolute path
+    output_video = os.path.abspath(output_video)
+    output_dir = os.path.dirname(output_video)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+    
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_video, fourcc, fps, (frame_width, frame_height))
+    
+    if not out.isOpened():
+        raise IOError(f"Failed to open output video writer: {output_video}")
     
     # Process frames
     print("Processing video frames...")
@@ -143,7 +173,12 @@ def stabilize_video(input_video, output_video, model_path, net_radius=15, scale_
     # Cleanup
     cap.release()
     out.release()
-    os.remove(motion_path)
+    # Remove temporary motion file if it exists
+    if os.path.exists(motion_path):
+        try:
+            os.remove(motion_path)
+        except Exception as e:
+            print(f"Warning: Could not remove temporary file {motion_path}: {e}")
     
     print(f"Stabilized video saved to: {output_video}")
 
@@ -170,7 +205,10 @@ def main():
         print("Stabilization completed successfully!")
         return 0
     except Exception as e:
+        import traceback
         print(f"Error during stabilization: {e}")
+        print(f"Error type: {type(e).__name__}")
+        traceback.print_exc()
         return 1
 
 if __name__ == "__main__":
